@@ -4,7 +4,7 @@ async function handleSearch() {
     resultsDiv.innerHTML = '';
   
     try {
-      const response = await fetch(`http://localhost:3000/find-collaborators/${username}`);
+      const response = await fetch(`http://https://collab-backend-jbkc.onrender.com/find-collaborators/${username}`);
       if (!response.ok) throw new Error('Network response was not ok');
       const collaborators = await response.json();
   
