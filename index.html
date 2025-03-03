@@ -1,20 +1,801 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Collaborator Finder</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitCollab - Find Collaborators</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <link rel="stylesheet" href="ext/style.css"/>
+   <script src="ext/script.js" defer></script>
+    <style>
+      .feed {
+            position: relative;
+            transition: transform 0.3s ease;
+            border: 1px solid var(--color-light);
+        }
+        
+        .feed:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Collaboration Actions */
+        .collab-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .collab-action-btn {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: var(--card-border-radius);
+            background: var(--color-light);
+            transition: all 0.3s ease;
+        }
+
+        .collab-action-btn:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        /* Skill Tags */
+        .skill-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+  .message-modal {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            width: 350px;
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+            box-shadow: 0 0 2rem hsl(var(--color-primary), 75%, 60%, 25%);
+            z-index: 1000;
+            display: none;
+        }
+
+        .message-header {
+            padding: var(--card-padding);
+            border-bottom: 1px solid var(--color-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .message-body {
+            padding: var(--card-padding);
+            height: 300px;
+            overflow-y: auto;
+            background: var(--color-light);
+        }
+
+        .message-composer {
+            padding: var(--card-padding);
+        }
+
+        .message-input {
+            width: 100%;
+            padding: var(--search-padding);
+            border-radius: 4px;
+            background: var(--color-light);
+            color: var(--color-dark);
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            background: var(--color-white);
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border-radius: var(--card-border-radius);
+        }
+
+        .message-sender {
+            color: var(--color-primary);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .skill-tag {
+            background: var(--color-primary);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+
+        /* Enhanced Filters */
+        .filter-section {
+            padding: 1rem;
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            margin: 1rem 0;
+        }
+
+        .filter-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--color-gray);
+        }
+
+        /* Loading Animation */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner {
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid var(--color-gray);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        :root {
+            --font-base: 1rem;
+            --font-sm: 0.875rem;
+            --font-lg: 1.125rem;
+        }
+
+        body {
+            font-size: var(--font-base);
+            line-height: 1.6;
+        }
+
+        .search-bar input[type="search"] {
+            font-size: var(--font-sm);
+        }
+
+        .sidebar h3 {
+            font-size: var(--font-base);
+        }
+
+        .feed .stat {
+            font-size: var(--font-sm);
+        }
+        
+        .message-composer {
+            padding: 1rem;
+            border-top: 1px solid var(--color-light);
+        }
+        
+        .message-input {
+            width: 100%;
+            background: var(--color-light);
+            padding: 0.8rem;
+            border-radius: var(--border-radius);
+            color: var(--color-dark);
+        }
+        
+        /* Online Status */
+        .online-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--color-success);
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid var(--color-white);
+        }
+        
+        /* Collaboration Tools */
+        .collab-tools {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .tool-btn {
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            background: var(--color-primary);
+            color: white;
+            cursor: pointer;
+        }
+        .message-container {
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        
+        .collab-tools {
+            margin-top: 1rem;
+            gap: 0.5rem;
+        }
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
+
+        :root {
+            --white-color-lighness: 100%;
+            --light-color-lighness: 95%;
+            --dark-color-lighness: 17%;
+            --color-white: hsl(252, 30%, 10%);
+            --color-light: hsl(252, 30%, 17%);
+            --color-gray: hsl(252, 15%, 65%);
+            --color-primary: hsl(252, 75%, 60%);
+            --color-secondary: hsl(252, 100%, 90%);
+            --color-success: hsl(120, 95%, 65%);
+            --color-danger: hsl(0, 95%, 65%);
+            --color-dark: hsl(252, 30%, 95%);
+            --color-black: hsl(252, 30%, 100%);
+            --border-radius: 2rem;
+            --card-border-radius: 1rem;
+            --btn-padding: 0.6rem 2rem;
+            --search-padding: 0.6rem 1rem;
+            --card-padding: 1rem;
+            --top-sticky-left: 5.5rem;
+            --top-sticky-right: -20rem;
+        }
+
+
+        *,
+        *::after,
+        *::before {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            outline: 0;
+            text-decoration: none;
+            border: none;
+            list-style: none;
+        }
+
+        body {
+            font-family: "Poppins", sans-serif;
+            color: var(--color-dark);
+            background: var(--color-light);
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .profile-photo {
+            width: 2.7rem;
+            aspect-ratio: 1/1;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        img {
+            display: block;
+            width: 100%;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: var(--btn-padding);
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 300ms ease;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .text-bold {
+            font-weight: 500;
+        }
+
+        .text-muted {
+            color: var(--color-gray);
+        }
+
+        nav {
+            width: 100%;
+            z-index: 10;
+            background: var(--color-white);
+            position: fixed;
+            top: 0;
+            padding: 0.7rem 0;
+        }
+
+        nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-bar {
+            background: var(--color-light);
+            padding: var(--search-padding);
+            border-radius: var(--border-radius);
+        }
+
+        .search-bar input[type="search"] {
+            background: transparent;
+            width: 30vw;
+            margin-left: 1rem;
+            font-size: 0.9rem;
+            color: var(--color-dark);
+        }
+
+        nav .search-bar input[type="search"]::placeholder {
+            color: var(--color-gray);
+        }
+
+        nav .create {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        main {
+            position: relative;
+            top: 5.5rem;
+        }
+
+        main .container {
+            display: grid;
+            grid-template-columns: 18vw auto 20vw;
+            column-gap: 2rem;
+            position: relative;
+        }
+
+        main .container .left {
+            height: max-content;
+            position: sticky;
+            top: var(--top-sticky-left);
+        }
+
+        main .container .left .profile {
+            padding: var(--card-padding);
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+            display: flex;
+            align-items: center;
+            column-gap: 1rem;
+            width: 100%;
+        }
+
+        .left .sidebar {
+            margin-top: 1rem;
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+        }
+
+        .left .sidebar .manu-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            height: 4rem;
+            transition: all 300ms ease;
+            position: relative;
+        }
+
+        .left .sidebar .manu-item:hover {
+            background: var(--color-light);
+        }
+
+        .left .sidebar i {
+            font-size: 1.6rem;
+            color: var(--color-gray);
+            margin-left: 2rem;
+            position: relative;
+        }
+
+        .left .sidebar i .notification-count {
+            background: var(--color-danger);
+            color: white;
+            font-size: 10px !important;
+            border-radius: 0.8rem;
+            padding: 0.26rem 0.38rem;
+            position: absolute;
+            top: -0.4rem;
+            right: -1rem;
+            font-style: italic;
+        }
+
+        .left .sidebar h3 {
+            margin-left: 1.5rem;
+            font-size: 1rem;
+        }
+
+        .left .sidebar .active {
+            background: var(--color-light);
+        }
+
+        .left .sidebar .active i,
+        .left .sidebar .active h3 {
+            color: var(--color-primary);
+        }
+
+        .left .sidebar .active::before {
+            content: "";
+            width: 0.5rem;
+            height: 100%;
+            position: absolute;
+            display: block;
+            background-color: var(--color-primary);
+        }
+
+        .left .sidebar .manu-item:first-child.active {
+            border-top-left-radius: var(--card-border-radius);
+            overflow: hidden;
+        }
+
+        .left .sidebar .manu-item:last-child.active {
+            border-bottom-left-radius: var(--card-border-radius);
+            overflow: hidden;
+        }
+
+        .left .btn {
+            width: 100%;
+            margin-top: 1rem;
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        /* Right sidebar styles */
+        .right {
+            height: max-content;
+            position: sticky;
+            top: var(--top-sticky-right);
+        }
+
+        .right .messages {
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+            padding: var(--card-padding);
+            transition: all 0.4s;
+        }
+
+        .right .messages .heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .right .messages i {
+            font-size: 1.4rem;
+        }
+
+        .middle .feed {
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+            padding: var(--card-padding);
+            margin: 1rem 0;
+            line-height: 1.5rem;
+        }
+
+        
+    </style>
 </head>
 <body>
-  <div class="app">
-    <div class="search-bar">
-      <input type="text" id="username" placeholder="Search for GitHub username...">
-      <button onclick="handleSearch()">Search</button>
-    </div>
-    <div class="results" id="results"></div>
-  </div>
+    <nav>
+        <div class="container">
+            <h2>GitCollab</h2>
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input 
+                    type="search" 
+                    id="searchInput"
+                    placeholder="Search developers..."
+                >
+                <button class="btn btn-primary" id="searchBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="create">
+                <a href="#" class="btn btn-primary" id="connectGithub">
+                    <i class="fab fa-github"></i> Connect
+                </a>
+            </div>
+        </div>
+    </nav>
 
-  <script src="script.js"></script>
+    <main>
+        <div class="container">
+            <!-- Left Sidebar -->
+            <div class="left">
+                <div class="sidebar">
+                    <div class="manu-item active">
+                        <i class="fas fa-users"></i>
+                        <h3>Discover</h3>
+                    </div>
+                    <div class="manu-item">
+                        <i class="fas fa-comments"></i>
+                        <h3>Messages</h3>
+                    </div>
+                    <div class="manu-item">
+                        <i class="fas fa-bell"></i>
+                        <h3>Notifications</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Feed -->
+            <div class="middle">
+                <div class="feeds" id="results">
+                    <div class="feed welcome">
+                        <div class="head">
+                            <h3>Welcome to GitCollab!</h3>
+                        </div>
+                        <p class="text-muted">Search for developers to collaborate with</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="right">
+                <div class="messages">
+                    <div class="heading">
+                        <h4>Active Collaborators</h4>
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div id="activeUsers">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+                <br>
+                <div class="messages">
+                    <div class="heading">
+                        <h4>Connection Requests</h4>
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div id="connectionRequests">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Message Modal -->
+    <div class="message-modal" id="messageModal">
+        <div class="message-header">
+            <h4>Message to <span id="recipientName"></span></h4>
+            <button class="btn" onclick="closeMessageModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="message-body" id="messageHistory">
+            <!-- Messages will appear here -->
+        </div>
+        <div class="message-composer">
+            <textarea 
+                class="message-input"
+                id="messageInput"
+                placeholder="Type your message..."
+            ></textarea>
+            <button class="btn btn-primary" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i> Send
+            </button>
+        </div>
+    </div>
+
+    <script>
+
+      let currentRecipient = null;
+    let githubToken = null;
+
+    async function sendMessage() {
+        const message = document.getElementById('messageInput').value;
+        const repo = 'your-repo'; // Set your target repository
+        const owner = 'your-username'; // Set your GitHub username
+        
+        try {
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: `Message for ${currentRecipient} from GitCollab`,
+                    body: `@${currentRecipient} - ${message}`
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to send message');
+            
+            const messageHistory = document.getElementById('messageHistory');
+            messageHistory.innerHTML += `
+                <div class="message">
+                    <div class="message-sender">You</div>
+                    <div class="message-content">${message}</div>
+                </div>
+            `;
+            document.getElementById('messageInput').value = '';
+        } catch (error) {
+            alert('Error sending message: ' + error.message);
+        }
+    }
+    
+    const CollabFinder = {
+        config: {
+            apiBase: 'https://collab-backend-jbkc.onrender.com',
+            wsEndpoint: 'wss://collab-backend-jbkc.onrender.com/ws'
+        },
+        
+        init() {
+            this.bindEvents();
+            this.initWS();
+        },
+
+        bindEvents() {
+            document.getElementById('searchBtn').addEventListener('click', () => this.search());
+            document.getElementById('searchInput').addEventListener('keypress', e => {
+                if(e.key === 'Enter') this.search();
+            });
+            document.getElementById('connectGithub').addEventListener('click', e => {
+                e.preventDefault();
+                window.location.href = `https://github.com/login/oauth/authorize?client_id=YOUR_CLIENT_ID`;
+            });
+        },
+
+        async search() {
+            try {
+                const query = document.getElementById('searchInput').value;
+                const response = await fetch(`${this.config.apiBase}/find-collaborators/${query}`);
+                
+                if(!response.ok) throw new Error('Search failed');
+                
+                const data = await response.json();
+                this.displayResults(data);
+            } catch(error) {
+                this.showError(error.message);
+            }
+        },
+
+        displayResults(users) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = users.map(user => `
+                <div class="feed">
+                    <div class="head">
+                        <div class="user">
+                            <div class="profile-photo">
+                                <img src="${user.avatar_url}">
+                            </div>
+                            <div class="info">
+                                <h3>${user.login}</h3>
+                                <p class="text-muted">${user.location || 'No location'}</p>
+                            </div>
+                        </div>
+                        <div class="collab-actions">
+                            <button class="btn btn-primary" onclick="CollabFinder.startChat('${user.login}')">
+                                <i class="fas fa-comment"></i>
+                            </button>
+                            <a href="${user.html_url}" target="_blank" class="btn btn-primary">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="stats">
+                        <span class="stat">
+                            <i class="fas fa-code"></i> ${user.public_repos} repos
+                        </span>
+                        <span class="stat">
+                            <i class="fas fa-users"></i> ${user.followers} followers
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        },
+
+        initWS() {
+            this.socket = new WebSocket(this.config.wsEndpoint);
+            
+            this.socket.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                this.handleMessage(message);
+            };
+        },
+
+        startChat(username) {
+            document.getElementById('recipientName').textContent = username;
+            document.getElementById('messageModal').style.display = 'block';
+        },
+
+        sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = {
+                content: input.value,
+                to: document.getElementById('recipientName').textContent
+            };
+            this.socket.send(JSON.stringify(message));
+            input.value = '';
+        },
+
+        handleMessage(message) {
+            const history = document.getElementById('messageHistory');
+            history.innerHTML += `
+                <div class="message">
+                    <div class="message-content">${message.content}</div>
+                    <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+        },
+
+        showError(msg) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="feed error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${msg}
+                </div>
+            `;
+        }
+    };
+
+// GitHub OAuth Flow
+    async function connectGitHub() {
+        const clientId = 'YOUR_GITHUB_CLIENT_ID';
+        const redirectUri = encodeURIComponent(window.location.href);
+        window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=repo`;
+    }
+
+    // Handle OAuth callback
+    async function handleOAuthCallback() {
+        const code = new URLSearchParams(window.location.search).get('code');
+        if (code) {
+            try {
+                const response = await fetch('https://collab-backend-jbkc.onrender.com/exchange-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code })
+                });
+                
+                const data = await response.json();
+                githubToken = data.token;
+                localStorage.setItem('githubToken', githubToken);
+            } catch (error) {
+                console.error('Authentication failed:', error);
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if(code) {
+        // Directly exchange code for token
+        fetch('https://your-backend.com/exchange-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+        })
+        .then(response => response.json())
+        .then(({ token }) => {
+            localStorage.setItem('githubToken', token);
+            window.history.replaceState({}, document.title, "/");
+        });
+    }
+});
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        handleOAuthCallback();
+        githubToken = localStorage.getItem('githubToken');
+    });
+    document.addEventListener('DOMContentLoaded', () => CollabFinder.init());
+    </script>
 </body>
 </html>
