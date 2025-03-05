@@ -885,13 +885,11 @@ if (token) {
 }
 }
     document.addEventListener('DOMContentLoaded', () => {
+        checkAuthStatus();
         handleOAuthCallback();
+        handleAuthCallback();
         githubToken = localStorage.getItem('githubToken');
     });
-    document.addEventListener('DOMContentLoaded', () => {
-    checkAuthStatus();
-    handleAuthCallback();
-});
     document.addEventListener('DOMContentLoaded', () => CollabFinder.init());
     </script>
 </body>
