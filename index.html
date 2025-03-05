@@ -182,12 +182,12 @@
         .feed .stat {
             font-size: var(--font-sm);
         }
-        
+
         .message-composer {
             padding: 1rem;
             border-top: 1px solid var(--color-light);
         }
-        
+
         .message-input {
             width: 100%;
             background: var(--color-light);
@@ -195,7 +195,7 @@
             border-radius: var(--border-radius);
             color: var(--color-dark);
         }
-        
+
         /* Online Status */
         .online-status {
             width: 10px;
@@ -207,14 +207,14 @@
             right: 0;
             border: 2px solid var(--color-white);
         }
-        
+
         /* Collaboration Tools */
         .collab-tools {
             display: flex;
             gap: 1rem;
             margin-top: 1rem;
         }
-        
+
         .tool-btn {
             padding: 0.5rem 1rem;
             border-radius: var(--border-radius);
@@ -227,7 +227,7 @@
             border-radius: var(--card-border-radius);
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
         }
-        
+
         .collab-tools {
             margin-top: 1rem;
             gap: 0.5rem;
@@ -498,7 +498,7 @@
             line-height: 1.5rem;
         }
 
-        
+
     </style>
 </head>
 <body>
@@ -507,8 +507,8 @@
             <h2>GitCollab</h2>
             <div class="search-bar">
                 <i class="fas fa-search"></i>
-                <input 
-                    type="search" 
+                <input
+                    type="search"
                     id="searchInput"
                     placeholder="Search developers..."
                 >
@@ -517,10 +517,21 @@
                 </button>
             </div>
             <div class="create">
-                <a href="#" class="btn btn-primary" id="connectGithub">
-                    <i class="fab fa-github"></i> Connect
-                </a>
-            </div>
+    <div id="userProfile" style="display: none;">
+        <div class="profile-photo" id="userAvatar">
+            <img src="" alt="Profile Picture">
+        </div>
+        <div class="user-info">
+            <span class="text-bold" id="userName"></span>
+            <button class="btn btn-primary" onclick="logout()" style="margin-left: 1rem;">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </div>
+    <button class="btn btn-primary" id="connectGithub">
+        <i class="fab fa-github"></i> Connect GitHub
+    </button>
+</div>
         </div>
     </nav>
 
@@ -564,7 +575,7 @@
                         <i class="fas fa-users"></i>
                     </div>
                     <div id="activeUsers">
-                        <!-- Filled by JS -->
+                        <!--  -->
                     </div>
                 </div>
                 <br>
@@ -574,7 +585,7 @@
                         <i class="fas fa-user-plus"></i>
                     </div>
                     <div id="connectionRequests">
-                        <!-- Filled by JS -->
+                        <!--  -->
                     </div>
                 </div>
             </div>
@@ -593,7 +604,7 @@
             <!-- Messages will appear here -->
         </div>
         <div class="message-composer">
-            <textarea 
+            <textarea
                 class="message-input"
                 id="messageInput"
                 placeholder="Type your message..."
@@ -613,7 +624,7 @@
         const message = document.getElementById('messageInput').value;
         const repo = 'GitCollab';
         const owner = 'nia-cloud-official';
-        
+
         try {
             const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
                 method: 'POST',
@@ -628,7 +639,7 @@
             });
 
             if (!response.ok) throw new Error('Failed to send message');
-            
+
             const messageHistory = document.getElementById('messageHistory');
             messageHistory.innerHTML += `
                 <div class="message">
@@ -641,13 +652,13 @@
             alert('Error sending message: ' + error.message);
         }
     }
-    
+
     const CollabFinder = {
         config: {
             apiBase: 'https://collab-backend-jbkc.onrender.com',
             wsEndpoint: 'wss://collab-backend-jbkc.onrender.com/ws'
         },
-        
+
         init() {
             this.bindEvents();
             this.initWS();
@@ -668,9 +679,9 @@
             try {
                 const query = document.getElementById('searchInput').value;
                 const response = await fetch(`${this.config.apiBase}/find-collaborators/${query}`);
-                
+
                 if(!response.ok) throw new Error('Search failed');
-                
+
                 const data = await response.json();
                 this.displayResults(data);
             } catch(error) {
@@ -715,7 +726,7 @@
 
         initWS() {
             this.socket = new WebSocket(this.config.wsEndpoint);
-            
+
             this.socket.onmessage = (event) => {
                 const message = JSON.parse(event.data);
                 this.handleMessage(message);
@@ -758,14 +769,13 @@
         }
     };
 
-// GitHub OAuth Flow
+// GitHub Login
     async function connectGitHub() {
         const clientId = 'Ov23liHCHZ3XAWHP3ASa';
         const redirectUri = encodeURIComponent(window.location.href);
         window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=repo`;
     }
 
-    // Handle OAuth callback
     async function handleOAuthCallback() {
         const code = new URLSearchParams(window.location.search).get('code');
         if (code) {
@@ -777,7 +787,7 @@
                     },
                     body: JSON.stringify({ code })
                 });
-                
+
                 const data = await response.json();
                 githubToken = data.token;
                 localStorage.setItem('githubToken', githubToken);
@@ -790,9 +800,8 @@
     document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
-    
+
     if(code) {
-        // Directly exchange code for token
         fetch('https://https://collab-backend-jbkc.onrender.com/exchange-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -806,7 +815,75 @@
     }
 });
 
-    // Initialize
+async function fetchUserProfile(token) {
+try {
+    const response = await fetch('https://api.github.com/user', {
+        headers: {
+            'Authorization': `token ${token}`
+        }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch profile');
+    return await response.json();
+} catch (error) {
+    console.error('Profile fetch error:', error);
+    return null;
+}
+}
+
+function updateUserProfile(user) {
+const profileSection = document.getElementById('userProfile');
+const connectButton = document.getElementById('connectGithub');
+
+if (user) {
+    document.getElementById('userAvatar').querySelector('img').src = user.avatar_url;
+    document.getElementById('userName').textContent = user.name || user.login;
+    profileSection.style.display = 'flex';
+    connectButton.style.display = 'none';
+} else {
+    profileSection.style.display = 'none';
+    connectButton.style.display = 'block';
+}
+}
+
+
+async function handleAuthCallback() {
+const code = new URLSearchParams(window.location.search).get('code');
+if (code) {
+    try {
+        const response = await fetch('https://your-backend.com/exchange-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+        });
+
+        const { token } = await response.json();
+        localStorage.setItem('githubToken', token);
+
+
+        const user = await fetchUserProfile(token);
+        if (user) updateUserProfile(user);
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } catch (error) {
+        console.error('Authentication failed:', error);
+    }
+}
+}
+
+function logout() {
+localStorage.removeItem('githubToken');
+updateUserProfile(null);
+window.location.reload();
+}
+
+async function checkAuthStatus() {
+const token = localStorage.getItem('githubToken');
+if (token) {
+    const user = await fetchUserProfile(token);
+    updateUserProfile(user);
+}
+}
     document.addEventListener('DOMContentLoaded', () => {
         handleOAuthCallback();
         githubToken = localStorage.getItem('githubToken');
